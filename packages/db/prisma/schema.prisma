@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  passwordHash String
+  fullName    String?
+  avatarUrl   String?
+  phone       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  roles       UserRole[]
+  addresses   Address[]
+  orders      Order[]
+  reviews     Review[]
+  cart        Cart?
+
+  @@map("users")
+}
+
+model Role {
+  id    Int        @id @default(autoincrement())
+  name  String     @unique
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  role     Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId   Int
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Address {
+  id        String  @id @default(uuid())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  line1     String
+  line2     String?
+  city      String
+  state     String?
+  postalCode String
+  country   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("addresses")
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  logoUrl  String?
+  products Product[]
+
+  @@map("brands")
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  parent    Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
+  parentId  Int?
+  children  Category[] @relation("CategoryToParent")
+  name      String
+  slug      String     @unique
+  products  Product[]
+
+  @@map("categories")
+}
+
+model ProductModel3D {
+  id          String  @id @default(uuid())
+  storageKey  String  @unique
+  previewUrl  String?
+  sizeBytes   BigInt?
+  format      String?
+  compression String?
+  uploadedAt  DateTime @default(now())
+  product     Product?
+
+  @@map("product_model_3d")
+}
+
+model Product {
+  id          String           @id @default(uuid())
+  brand       Brand?           @relation(fields: [brandId], references: [id])
+  brandId     Int?
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  sku         String           @unique
+  name        String
+  description String?
+  price       Decimal
+  stock       Int              @default(0)
+  model3d     ProductModel3D?  @relation(fields: [model3dId], references: [id], onDelete: SetNull)
+  model3dId   String?          @unique
+  images      ProductImage[]
+  reviews     Review[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  isActive    Boolean          @default(true)
+
+  @@index([categoryId, price])
+  @@map("products")
+}
+
+model ProductImage {
+  id         String  @id @default(uuid())
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  url        String
+  altText    String?
+  sortOrder  Int      @default(0)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+model Order {
+  id          String       @id @default(uuid())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  status      String
+  totalAmount Decimal
+  placedAt    DateTime     @default(now())
+  shippedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  items       OrderItem[]
+
+  @@index([userId, placedAt(sort: Desc)])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Decimal
+
+  @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt(sort: Desc)])
+  @@map("reviews")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String     @unique
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}

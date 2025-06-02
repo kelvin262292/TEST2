@@ -1,0 +1,52 @@
+{
+  "name": "ecommerce-3d",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Modern 3D E-commerce Platform",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,js,jsx,json}\"",
+    "db:generate": "pnpm --filter db prisma generate",
+    "db:migrate": "pnpm --filter db prisma migrate dev",
+    "db:seed": "pnpm --filter db prisma db seed",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.5",
+    "turbo": "^1.13.0",
+    "typescript": "^5.4.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "^18.3.0",
+      "react-dom": "^18.3.0"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
+  }
+}
